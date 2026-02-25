@@ -2,7 +2,7 @@ import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import os
 
-TOKEN = os.getenv("TOKEN")  # Render'da qo'shamiz
+TOKEN = os.getenv("TOKEN = os.getenv("BOT_TOKEN")")  # Render'da qo'shamiz
 CHANNEL = "@SkechersGOWALK"  # Majburiy obuna kanalingiz
 
 bot = telebot.TeleBot(TOKEN)
