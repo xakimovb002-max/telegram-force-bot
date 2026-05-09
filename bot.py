@@ -3,18 +3,13 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 import requests
 
 TOKEN = "8645242729:AAELpQmB6-Kydw6lz6JJN11ScRUh5tAjeoQ"
-
-OPENWEATHER_API = "fb5b0254527ec050c0e71ece00768863"
+WEATHER_API = "fb5b0254527ec050c0e71ece00768863"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
+# MENU
 menu = ReplyKeyboardMarkup(resize_keyboard=True)
-
-menu.add(
-    KeyboardButton("🌦 Ob-havo"),
-    KeyboardButton("💵 Valyuta kursi")
-)
 
 menu.add(
     KeyboardButton("👥 Referral sistema"),
@@ -22,61 +17,87 @@ menu.add(
 )
 
 menu.add(
-    KeyboardButton("📢 Reklama yuborish"),
+    KeyboardButton("🌦 Ob-havo"),
+    KeyboardButton("💵 Valyuta kursi")
+)
+
+menu.add(
+    KeyboardButton("📢 Reklama yuborish")
+)
+
+menu.add(
     KeyboardButton("🔐 Majburiy obuna")
 )
 
-@dp.message_handler(commands=['start'])
+# START
+@dp.message_handler(commands=["start"])
 async def start(message: types.Message):
-    await message.answer("✅ Menu ishladi", reply_markup=menu)
+    await message.answer(
+        "✅ Menu ishladi",
+        reply_markup=menu
+    )
 
-@dp.message_handler(lambda message: message.text == "💵 Valyuta kursi")
-async def valyuta(message: types.Message):
-    try:
-        url = "https://cbu.uz/uz/arkhiv-kursov-valyut/json/"
-        data = requests.get(url).json()
-
-        usd = data[0]['Rate']
-        eur = data[1]['Rate']
-        rub = data[2]['Rate']
-
-        text = f"""
-💵 Valyuta kurslari
-
-🇺🇸 USD: {usd} so'm
-🇪🇺 EUR: {eur} so'm
-🇷🇺 RUB: {rub} so'm
-"""
-
-        await message.answer(text)
-
-    except Exception as e:
-        await message.answer(f"Xatolik: {e}")
-
+# OB-HAVO
 @dp.message_handler(lambda message: message.text == "🌦 Ob-havo")
-async def ob_havo(message: types.Message):
-    try:
-        city = "Tashkent"
+async def weather(message: types.Message):
 
-        url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={OPENWEATHER_API}&units=metric"
+    city = "Tashkent"
 
-        data = requests.get(url).json()
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API}&units=metric"
 
-        temp = data['main']['temp']
-        desc = data['weather'][0]['description']
+    data = requests.get(url).json()
 
-        text = f"""
-🌦 Tashkent ob-havo
+    temp = data["main"]["temp"]
+    desc = data["weather"][0]["description"]
 
-🌡 Harorat: {temp}°C
-☁️ Holat: {desc}
-"""
+    await message.answer(
+        f"🌦 Shahar: {city}\n"
+        f"🌡 Harorat: {temp}°C\n"
+        f"☁️ Holat: {desc}"
+    )
 
-        await message.answer(text)
+# VALYUTA
+@dp.message_handler(lambda message: message.text == "💵 Valyuta kursi")
+async def kurs(message: types.Message):
 
-    except Exception as e:
-        await message.answer(f"Xatolik: {e}")
+    url = "https://cbu.uz/uz/arkhiv-kursov-valyut/json/USD/"
+    data = requests.get(url).json()
 
-print("Bot ishga tushdi")
+    price = data[0]["Rate"]
 
-executor.start_polling(dp, skip_updates=True)
+    await message.answer(
+        f"💵 1 USD = {price} so'm"
+    )
+
+# REFERAL
+@dp.message_handler(lambda message: message.text == "👥 Referral sistema")
+async def referal(message: types.Message):
+    await message.answer(
+        f"👥 Sizning referral linkingiz:\n"
+        f"https://t.me/Analytic?start={message.from_user.id}"
+    )
+
+# STATISTIKA
+@dp.message_handler(lambda message: message.text == "📊 Statistika")
+async def stat(message: types.Message):
+    await message.answer(
+        "📊 Bot ishlamoqda"
+    )
+
+# REKLAMA
+@dp.message_handler(lambda message: message.text == "📢 Reklama yuborish")
+async def reklama(message: types.Message):
+    await message.answer(
+        "📢 Reklama bo'limi"
+    )
+
+# MAJBURIY OBUNA
+@dp.message_handler(lambda message: message.text == "🔐 Majburiy obuna")
+async def obuna(message: types.Message):
+    await message.answer(
+        "🔐 Kanal obuna tizimi"
+    )
+
+if __name__ == "__main__":
+    print("Bot ishga tushdi")
+    executor.start_polling(dp, skip_updates=True)
