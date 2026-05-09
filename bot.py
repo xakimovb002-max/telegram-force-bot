@@ -2,43 +2,81 @@ from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 import requests
 
-TOKEN = "8645242729:AAELpQmB6-Kydw6lz6JJN11ScRUh5tAjeoQ"
+TOKEN = "BOT_TOKEN"
+
+OPENWEATHER_API = "OPENWEATHER_API"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
 menu = ReplyKeyboardMarkup(resize_keyboard=True)
-menu.add(KeyboardButton("💵 Valyuta kursi"))
+
+menu.add(
+    KeyboardButton("🌦 Ob-havo"),
+    KeyboardButton("💵 Valyuta kursi")
+)
+
+menu.add(
+    KeyboardButton("👥 Referral sistema"),
+    KeyboardButton("📊 Statistika")
+)
+
+menu.add(
+    KeyboardButton("📢 Reklama yuborish"),
+    KeyboardButton("🔐 Majburiy obuna")
+)
 
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
-    await message.answer(
-        "✅ Bot ishladi",
-        reply_markup=menu
-    )
+    await message.answer("✅ Menu ishladi", reply_markup=menu)
 
-@dp.message_handler()
-async def handler(message: types.Message):
-
-    if message.text == "💵 Valyuta kursi":
-
+@dp.message_handler(lambda message: message.text == "💵 Valyuta kursi")
+async def valyuta(message: types.Message):
+    try:
         url = "https://cbu.uz/uz/arkhiv-kursov-valyut/json/"
         data = requests.get(url).json()
 
-        usd = next(x for x in data if x["Ccy"] == "USD")
-        eur = next(x for x in data if x["Ccy"] == "EUR")
-        rub = next(x for x in data if x["Ccy"] == "RUB")
+        usd = data[0]['Rate']
+        eur = data[1]['Rate']
+        rub = data[2]['Rate']
 
         text = f"""
 💵 Valyuta kurslari
 
-🇺🇸 USD: {usd['Rate']} so'm
-🇪🇺 EUR: {eur['Rate']} so'm
-🇷🇺 RUB: {rub['Rate']} so'm
+🇺🇸 USD: {usd} so'm
+🇪🇺 EUR: {eur} so'm
+🇷🇺 RUB: {rub} so'm
 """
 
         await message.answer(text)
 
-if __name__ == "__main__":
-    print("Bot ishga tushdi")
-    executor.start_polling(dp, skip_updates=True)
+    except Exception as e:
+        await message.answer(f"Xatolik: {e}")
+
+@dp.message_handler(lambda message: message.text == "🌦 Ob-havo")
+async def ob_havo(message: types.Message):
+    try:
+        city = "Tashkent"
+
+        url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={OPENWEATHER_API}&units=metric"
+
+        data = requests.get(url).json()
+
+        temp = data['main']['temp']
+        desc = data['weather'][0]['description']
+
+        text = f"""
+🌦 Tashkent ob-havo
+
+🌡 Harorat: {temp}°C
+☁️ Holat: {desc}
+"""
+
+        await message.answer(text)
+
+    except Exception as e:
+        await message.answer(f"Xatolik: {e}")
+
+print("Bot ishga tushdi")
+
+executor.start_polling(dp, skip_updates=True)
