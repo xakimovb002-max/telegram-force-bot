@@ -1,5 +1,5 @@
 from aiogram import Bot, Dispatcher, executor, types
-from aiogram.types import ReplyKeyboardMarkup
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 import requests
 
 TOKEN = "8645242729:AAELpQmB6-Kydw6lz6JJN11ScRUh5tAjeoQ"
@@ -9,39 +9,43 @@ dp = Dispatcher(bot)
 
 # MENU
 menu = ReplyKeyboardMarkup(resize_keyboard=True)
-menu.add("💵 Valyuta kursi")
+button1 = KeyboardButton("💵 Valyuta kursi")
+menu.add(button1)
 
 # START
 @dp.message_handler(commands=['start'])
-async def start(message: types.Message):
+async def start_handler(message: types.Message):
     await message.answer(
         "✅ Menu ishladi",
         reply_markup=menu
     )
 
 # VALYUTA
-@dp.message_handler(lambda message: message.text == "💵 Valyuta kursi")
-async def valyuta(message: types.Message):
-    try:
-        url = "https://cbu.uz/uz/arkhiv-kursov-valyut/json/"
-        response = requests.get(url).json()
+@dp.message_handler()
+async def messages(message: types.Message):
 
-        usd = next((x for x in response if x["Ccy"] == "USD"), None)
-        eur = next((x for x in response if x["Ccy"] == "EUR"), None)
-        rub = next((x for x in response if x["Ccy"] == "RUB"), None)
+    if message.text == "💵 Valyuta kursi":
 
-        text = f"""
-💵 Valyuta kurslari:
+        try:
+            url = "https://cbu.uz/uz/arkhiv-kursov-valyut/json/"
+            data = requests.get(url).json()
+
+            usd = next(item for item in data if item["Ccy"] == "USD")
+            eur = next(item for item in data if item["Ccy"] == "EUR")
+            rub = next(item for item in data if item["Ccy"] == "RUB")
+
+            text = f"""
+💵 Valyuta kurslari
 
 🇺🇸 USD: {usd['Rate']} so'm
 🇪🇺 EUR: {eur['Rate']} so'm
 🇷🇺 RUB: {rub['Rate']} so'm
 """
 
-        await message.answer(text)
+            await message.answer(text)
 
-    except Exception as e:
-        await message.answer(f"Xato: {e}")
+        except Exception as e:
+            await message.answer(f"Xato: {e}")
 
 # RUN
 if __name__ == "__main__":
