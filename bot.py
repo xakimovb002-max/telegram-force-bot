@@ -1,32 +1,20 @@
 from aiogram import Bot, Dispatcher, types
-from aiogram.utils import executor
+from aiogram.filters import CommandStart
+import asyncio
 
 TOKEN = "8645242729:AAELpQmB6-Kydw6lz6JJN11ScRUh5tAjeoQ"
 
 bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
+dp = Dispatcher()
 
-refs = {}
-
-CHANNEL = "@reklamauz_ohangaron"
-BOT_USERNAME = "Analyticuz_bot"
-
-@dp.message_handler(commands=['start'])
+@dp.message(CommandStart())
 async def start(message: types.Message):
-    ref = message.get_args()
-    user_id = str(message.from_user.id)
-
-    if ref and ref != user_id:
-        refs[ref] = refs.get(ref, 0) + 1
-
-    link = f"https://t.me/{BOT_USERNAME}?start={user_id}"
-
-    count = refs.get(user_id, 0)
-
     await message.answer(
-        f"📢 Kanalimiz:\nhttps://t.me/reklamauz_ohangaron\n\n"
-        f"🔗 Sizning referal linkingiz:\n{link}\n\n"
-        f"👥 Taklif qilgan odamlar: {count}"
+        "✅ Assalomu alaykum!\n\n@Analyticuz_bot ishga tushdi."
     )
 
-executor.start_polling(dp)
+async def main():
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
