@@ -2,9 +2,9 @@ from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 import requests
 
-TOKEN = "BOT_TOKEN"
+TOKEN = "8645242729:AAELpQmB6-Kydw6lz6JJN11ScRUh5tAjeoQ"
 
-OPENWEATHER_API = "OPENWEATHER_API"
+OPENWEATHER_API = "fb5b0254527ec050c0e71ece00768863"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
