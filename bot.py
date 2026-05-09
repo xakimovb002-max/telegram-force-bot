@@ -72,14 +72,17 @@ async def kurs(message: types.Message):
 # REFERAL
 @dp.message_handler(lambda message: message.text == "👥 Referral sistema")
 async def referal(message: types.Message):
+
+    link = f"https://t.me/Analytic?start={message.from_user.id}"
+
     await message.answer(
-        f"👥 Sizning referral linkingiz:\n"
-        f"https://t.me/Analytic?start={message.from_user.id}"
+        f"👥 Sizning referal linkingiz:\n{link}"
     )
 
 # STATISTIKA
 @dp.message_handler(lambda message: message.text == "📊 Statistika")
 async def stat(message: types.Message):
+
     await message.answer(
         "📊 Bot ishlamoqda"
     )
@@ -87,6 +90,7 @@ async def stat(message: types.Message):
 # REKLAMA
 @dp.message_handler(lambda message: message.text == "📢 Reklama yuborish")
 async def reklama(message: types.Message):
+
     await message.answer(
         "📢 Reklama bo'limi"
     )
@@ -94,10 +98,12 @@ async def reklama(message: types.Message):
 # MAJBURIY OBUNA
 @dp.message_handler(lambda message: message.text == "🔐 Majburiy obuna")
 async def obuna(message: types.Message):
+
     await message.answer(
         "🔐 Kanal obuna tizimi"
     )
 
+# BOT START
 if __name__ == "__main__":
     print("Bot ishga tushdi")
     executor.start_polling(dp, skip_updates=True)
