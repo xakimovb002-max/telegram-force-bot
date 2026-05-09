@@ -26,6 +26,7 @@ menu.add("📢 Reklama yuborish", "🔐 Majburiy obuna")
 # START
 @dp.message_handler(commands=["start"])
 async def start(message: types.Message):
+
     users.add(message.from_user.id)
 
     await message.answer(
@@ -39,6 +40,7 @@ async def start(message: types.Message):
 # OB-HAVO
 @dp.message_handler(lambda message: message.text == "🌤 Ob-havo")
 async def weather(message: types.Message):
+
     city = "Tashkent"
 
     url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API}&units=metric"
@@ -59,18 +61,22 @@ async def weather(message: types.Message):
         await message.answer("❌ Ob-havo olinmadi")
 
 
-# VALYUTA
+# VALYUTA KURSI
 @dp.message_handler(lambda message: message.text == "💵 Valyuta kursi")
 async def kurs(message: types.Message):
+
     try:
-        data = requests.get("https://cbu.uz/uz/arkhiv-kursov-valyut/json/").json()
+        data = requests.get(
+            "https://cbu.uz/uz/arkhiv-kursov-valyut/json/"
+        ).json()
 
         usd = data[0]["Rate"]
         rub = data[1]["Rate"]
         eur = data[2]["Rate"]
 
         await message.answer(
-            f"💵 USD: {usd} so'm\n"
+            f"💵 Bugungi kurslar\n\n"
+            f"🇺🇸 USD: {usd} so'm\n"
             f"🇷🇺 RUB: {rub} so'm\n"
             f"🇪🇺 EUR: {eur} so'm"
         )
@@ -79,9 +85,46 @@ async def kurs(message: types.Message):
         await message.answer("❌ Kurs olinmadi")
 
 
+# HAR KUNLIK KURS
+async def daily_kurs():
+
+    while True:
+
+        try:
+
+            data = requests.get(
+                "https://cbu.uz/uz/arkhiv-kursov-valyut/json/"
+            ).json()
+
+            usd = data[0]["Rate"]
+            rub = data[1]["Rate"]
+            eur = data[2]["Rate"]
+
+            text = (
+                f"💵 Bugungi valyuta kurslari\n\n"
+                f"🇺🇸 USD: {usd} so'm\n"
+                f"🇷🇺 RUB: {rub} so'm\n"
+                f"🇪🇺 EUR: {eur} so'm"
+            )
+
+            for user in users:
+
+                try:
+                    await bot.send_message(user, text)
+
+                except:
+                    pass
+
+        except:
+            pass
+
+        await asyncio.sleep(86400)
+
+
 # STATISTIKA
 @dp.message_handler(lambda message: message.text == "📊 Statistika")
 async def stat(message: types.Message):
+
     await message.answer(
         f"👥 Foydalanuvchilar soni: {len(users)} ta"
     )
@@ -90,6 +133,7 @@ async def stat(message: types.Message):
 # REFERRAL
 @dp.message_handler(lambda message: message.text == "👥 Referral sistema")
 async def ref(message: types.Message):
+
     link = f"https://t.me/{(await bot.get_me()).username}?start={message.from_user.id}"
 
     await message.answer(
@@ -100,6 +144,7 @@ async def ref(message: types.Message):
 # MAJBURIY OBUNA
 @dp.message_handler(lambda message: message.text == "🔐 Majburiy obuna")
 async def sub(message: types.Message):
+
     await message.answer(
         f"🔐 Kanal: {CHANNEL_USERNAME}"
     )
@@ -108,10 +153,13 @@ async def sub(message: types.Message):
 # REKLAMA BOSHLASH
 @dp.message_handler(lambda message: message.text == "📢 Reklama yuborish")
 async def reklama(message: types.Message):
+
     if message.from_user.id != ADMIN_ID:
         return
 
-    await message.answer("📢 Reklama matnini yuboring")
+    await message.answer(
+        "📢 Reklama matnini yuboring"
+    )
 
 
 # REKLAMA YUBORISH
@@ -139,9 +187,11 @@ async def send_all(message: types.Message):
     count = 0
 
     for user in users:
+
         try:
             await bot.send_message(user, message.text)
             count += 1
+
             await asyncio.sleep(0.05)
 
         except:
@@ -153,5 +203,10 @@ async def send_all(message: types.Message):
 
 
 if __name__ == "__main__":
+
+    loop = asyncio.get_event_loop()
+    loop.create_task(daily_kurs())
+
     print("Bot ishga tushdi")
+
     executor.start_polling(dp, skip_updates=True)
