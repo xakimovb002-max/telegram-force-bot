@@ -1,50 +1,32 @@
-import telebot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-import os
+from aiogram import Bot, Dispatcher, types
+from aiogram.utils import executor
 
-TOKEN = os.getenv("BOT_TOKEN")
-CHANNEL = "@SkechersGOWALK"
+TOKEN = "8645242729:AAELpQmB6-Kydw6lz6JJN11ScRUh5tAjeoQ"
 
-bot = telebot.TeleBot(TOKEN)
+bot = Bot(token=TOKEN)
+dp = Dispatcher(bot)
 
+refs = {}
 
-def check_sub(user_id):
-    try:
-        member = bot.get_chat_member(CHANNEL, user_id)
-        return member.status in ["member", "administrator", "creator"]
-    except:
-        return False
+CHANNEL = "@reklamauz_ohangaron"
+BOT_USERNAME = "Analyticuz_bot"
 
+@dp.message_handler(commands=['start'])
+async def start(message: types.Message):
+    ref = message.get_args()
+    user_id = str(message.from_user.id)
 
-@bot.message_handler(commands=['start'])
-def start(message):
-    user_id = message.from_user.id
+    if ref and ref != user_id:
+        refs[ref] = refs.get(ref, 0) + 1
 
-    if check_sub(user_id):
-        bot.send_message(message.chat.id, "✅ Xush kelibsiz!")
-    else:
-        markup = InlineKeyboardMarkup()
-        btn1 = InlineKeyboardButton("📢 Kanalga obuna bo‘lish", url=f"https://t.me/{CHANNEL[1:]}")
-        btn2 = InlineKeyboardButton("🔄 Tekshirish", callback_data="check")
-        markup.add(btn1)
-        markup.add(btn2)
+    link = f"https://t.me/{BOT_USERNAME}?start={user_id}"
 
-        bot.send_message(
-            message.chat.id,
-            "❗ Botdan foydalanish uchun kanalga obuna bo‘ling:",
-            reply_markup=markup
-        )
+    count = refs.get(user_id, 0)
 
+    await message.answer(
+        f"📢 Kanalimiz:\nhttps://t.me/reklamauz_ohangaron\n\n"
+        f"🔗 Sizning referal linkingiz:\n{link}\n\n"
+        f"👥 Taklif qilgan odamlar: {count}"
+    )
 
-@bot.callback_query_handler(func=lambda call: call.data == "check")
-def callback_check(call):
-    user_id = call.from_user.id
-
-    if check_sub(user_id):
-        bot.answer_callback_query(call.id, "✅ Tasdiqlandi!")
-        bot.send_message(call.message.chat.id, "🎉 Endi foydalanishingiz mumkin!")
-    else:
-        bot.answer_callback_query(call.id, "❌ Hali obuna bo‘lmagansiz!")
-
-
-bot.infinity_polling()
+executor.start_polling(dp)
