@@ -1,26 +1,32 @@
 from aiogram import Bot, Dispatcher, executor, types
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
-import requests
+from aiogram.types import ReplyKeyboardMarkup
 import asyncio
+import sqlite3
+import requests
 
-TOKEN = "TOKENINGIZNI_YOZING"
+TOKEN = "8645242729:AAELpQmB6-Kydw6lz6JJN11ScRUh5tAjeoQ"
 ADMIN_ID = 6726095077
 CHANNEL_USERNAME = "@reklamauz_ohangaron"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
-users = set()
-referrals = {}
+db = sqlite3.connect("users.db")
+sql = db.cursor()
 
-# MENU
+sql.execute("""
+CREATE TABLE IF NOT EXISTS users (
+id INTEGER
+)
+""")
+db.commit()
+
 menu = ReplyKeyboardMarkup(resize_keyboard=True)
 menu.add("👥 Referral sistema", "📊 Statistika")
 menu.add("🌦 Ob-havo", "💵 Valyuta kursi")
 menu.add("📢 Reklama yuborish", "🔐 Majburiy obuna")
 
 
-# KANAL TEKSHIRISH
 async def check_sub(user_id):
     try:
         member = await bot.get_chat_member(CHANNEL_USERNAME, user_id)
@@ -34,117 +40,107 @@ async def check_sub(user_id):
         return False
 
 
-# START
-@dp.message_handler(commands=['start'])
-async def start_cmd(message: types.Message):
+@dp.message_handler(commands=["start"])
+async def start(message: types.Message):
+
     user_id = message.from_user.id
-    users.add(user_id)
 
-    subscribed = await check_sub(user_id)
+    sql.execute(f"SELECT id FROM users WHERE id={user_id}")
+    data = sql.fetchone()
 
-    if not subscribed:
-        btn = InlineKeyboardMarkup()
+    if data is None:
+        sql.execute(f"INSERT INTO users VALUES ({user_id})")
+        db.commit()
+
+    sub = await check_sub(user_id)
+
+    if not sub:
+        btn = types.InlineKeyboardMarkup()
         btn.add(
-            InlineKeyboardButton(
+            types.InlineKeyboardButton(
                 "✅ Kanalga obuna bo'lish",
-                url=f"https://t.me/{CHANNEL_USERNAME.replace('@', '')}"
+                url=f"https://t.me/{CHANNEL_USERNAME.replace('@','')}"
             )
         )
 
         await message.answer(
-            "❌ Botdan foydalanish uchun kanalga obuna bo‘ling.",
+            "❌ Botdan foydalanish uchun kanalga obuna bo'ling.",
             reply_markup=btn
         )
         return
 
-    args = message.get_args()
-
-    if args:
-        ref_id = int(args)
-
-        if ref_id != user_id:
-            referrals[ref_id] = referrals.get(ref_id, 0) + 1
-
     await message.answer(
-        f"👋 Assalomu alaykum\n\n"
-        f"🆔 Sizning ID: {user_id}\n\n"
-        f"Botga xush kelibsiz.",
+        f"👋 Assalomu alaykum\n\n🆔 Sizning ID: {user_id}\n\nBotga xush kelibsiz.",
         reply_markup=menu
     )
 
 
-# REFERRAL
-@dp.message_handler(lambda message: message.text == "👥 Referral sistema")
-async def referral_system(message: types.Message):
-    user_id = message.from_user.id
-
-    count = referrals.get(user_id, 0)
-
-    link = f"https://t.me/{(await bot.get_me()).username}?start={user_id}"
-
-    await message.answer(
-        f"👥 Sizning referral linkingiz:\n\n{link}\n\n"
-        f"📊 Taklif qilgan odamlar: {count}"
-    )
-
-
-# STATISTIKA
 @dp.message_handler(lambda message: message.text == "📊 Statistika")
-async def statistika(message: types.Message):
+async def stat(message: types.Message):
+
+    sql.execute("SELECT * FROM users")
+    users = sql.fetchall()
+
     await message.answer(
-        f"📊 Bot statistikasi\n\n"
-        f"👤 Foydalanuvchilar soni: {len(users)}"
+        f"📊 Bot foydalanuvchilari: {len(users)} ta"
     )
 
 
-# OB-HAVO
-@dp.message_handler(lambda message: message.text == "🌦 Ob-havo")
-async def weather(message: types.Message):
-    await message.answer(
-        "🌦 Hozircha ob-havo moduli test rejimida."
-    )
-
-
-# VALYUTA
 @dp.message_handler(lambda message: message.text == "💵 Valyuta kursi")
 async def valyuta(message: types.Message):
+
     try:
         data = requests.get("https://cbu.uz/uz/arkhiv-kursov-valyut/json/").json()
 
-        usd = next(item for item in data if item["Ccy"] == "USD")
+        usd = data[0]['Rate']
+        rub = data[1]['Rate']
 
         await message.answer(
-            f"💵 Dollar kursi:\n\n"
-            f"1 USD = {usd['Rate']} so'm"
+            f"💵 USD: {usd} so'm\n🇷🇺 RUB: {rub} so'm"
         )
 
     except:
-        await message.answer("❌ Valyuta kursini olib bo‘lmadi.")
+        await message.answer("Xatolik yuz berdi.")
 
 
-# MAJBURIY OBUNA
+@dp.message_handler(lambda message: message.text == "🌦 Ob-havo")
+async def obhavo(message: types.Message):
+
+    await message.answer(
+        "🌤 Hozircha oddiy ob-havo moduli ishlayapti."
+    )
+
+
+@dp.message_handler(lambda message: message.text == "👥 Referral sistema")
+async def referal(message: types.Message):
+
+    link = f"https://t.me/{(await bot.get_me()).username}?start={message.from_user.id}"
+
+    await message.answer(
+        f"👥 Sizning referral linkingiz:\n\n{link}"
+    )
+
+
 @dp.message_handler(lambda message: message.text == "🔐 Majburiy obuna")
-async def majburiy_obuna(message: types.Message):
-    if message.from_user.id != ADMIN_ID:
-        return
+async def kanal(message: types.Message):
 
     await message.answer(
         f"🔐 Kanal: {CHANNEL_USERNAME}"
     )
 
 
-# REKLAMA BOSHLASH
 @dp.message_handler(lambda message: message.text == "📢 Reklama yuborish")
 async def reklama_start(message: types.Message):
+
     if message.from_user.id != ADMIN_ID:
         return
 
     await message.answer("📢 Reklama matnini yuboring")
 
 
-# REKLAMA YUBORISH
 @dp.message_handler()
 async def send_reklama(message: types.Message):
+
     if message.from_user.id != ADMIN_ID:
         return
 
@@ -163,11 +159,14 @@ async def send_reklama(message: types.Message):
     if message.text in buttons:
         return
 
+    sql.execute("SELECT * FROM users")
+    users = sql.fetchall()
+
     count = 0
 
     for user in users:
         try:
-            await bot.send_message(user, message.text)
+            await bot.send_message(user[0], message.text)
             count += 1
             await asyncio.sleep(0.05)
 
@@ -178,7 +177,7 @@ async def send_reklama(message: types.Message):
         f"✅ Reklama {count} ta odamga yuborildi."
     )
 
+
 if __name__ == "__main__":
     print("Bot ishga tushdi")
     executor.start_polling(dp, skip_updates=True)
-
