@@ -178,7 +178,7 @@ async def send_reklama(message: types.Message):
         f"✅ Reklama {count} ta odamga yuborildi."
     )
 
-
 if __name__ == "__main__":
     print("Bot ishga tushdi")
     executor.start_polling(dp, skip_updates=True)
+
